@@ -453,10 +453,10 @@ def Raman_PCA(da, k_PCA=4):
         attrs={"units": "u.a."},
         coords={
             "y": xr.DataArray(
-                da.x.values, name="y", dims=["y"], attrs={"units": da.x.attrs["units"]}
+                da.y.values, name="y", dims=["y"], attrs={"units": da.x.attrs["units"]}
             ),
             "x": xr.DataArray(
-                da.y.values, name="x", dims=["x"], attrs={"units": da.y.attrs["units"]}
+                da.x.values, name="x", dims=["x"], attrs={"units": da.y.attrs["units"]}
             ),
             "Num_component": xr.DataArray(
                 range(np.shape(C2)[2]),
