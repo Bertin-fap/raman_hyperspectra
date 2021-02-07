@@ -92,7 +92,7 @@ rhp.Raman_NMF(da_denoise, k_NMF = 6)
 
 # Meta
 	- François Bertin– francois.bertin7@wanadoo.fr
-	- Amal Chabli- 
+	- Amal Chabli- amal.chabli@orange.fr
 
 Distributed under the [MIT license](https://mit-license.org/)
 
