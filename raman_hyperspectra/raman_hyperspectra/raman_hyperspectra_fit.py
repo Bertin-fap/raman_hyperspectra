@@ -82,23 +82,31 @@ __all__ = ["fit_Raman", "fit_hyperspectra_Si", "init_model", "sum_functions"]
 
 def init_model(file, sheet=None):
 
-    """
-    init_model parses the Excel/cv file containing the fiting model
+    """init_model parses the Excel/cv file containing the fiting model
     for more information execute:
-        import raman_hyperspectra as rhp
-        print(rhp.raman_hyperspectra_fit.__doc__)
+        - import raman_hyperspectra as rhp
+        - print(rhp.raman_hyperspectra_fit.__doc__)
     Follow the instruction to create your own init_file
 
-   Arguments:
+   Args:
         file (string): path+name of the Excel/csv storing the modele
+        
         sheet (string): name of the sheet (default = None)
 
    Returns:
-        param_fixed (ndarray): list of the values of both the freezed and the free parameters. The free parameters are set to 0.
+        param_fixed (ndarray): list of the values of both the freezed 
+        and the free parameters. The free parameters are set to 0.
+        
         param_fit (ndarray): list of the values of the free parameters
+        
         type (list): list of fonctions to sum
-        mask (ndarray): list of parameter mask (1 is the parameter is fee, 0 if the parameter is freezed)
-        index_fit (ndarray): list of the indice of the free parameters in the ndarray 'param_fixed'
+        
+        mask (ndarray): list of parameter mask 
+        (1 is the parameter is fee, 0 if the parameter is freezed)
+        
+        index_fit (ndarray): list of the indice of the free parameters 
+        in the ndarray 'param_fixed'
+        
         label (list): ['function type : name of the free parater',... ])
 
     """
@@ -118,10 +126,10 @@ def init_model(file, sheet=None):
     }
     label = []
 
-    if file.lower().endswith(".csv"):
+    if str(file).lower().endswith(".csv"):
         data = pd.read_csv(file, sep=";", header=3, index_col=0)
 
-    elif file.lower().endswith(".xlsx") or file.lower().endswith(".xls"):
+    elif str(file).lower().endswith(".xlsx") or str(file).lower().endswith(".xls"):
         if sheet is not None:
             data = pd.read_excel(file, header=4, index_col=0, sheet_name=sheet)
         else:
@@ -160,15 +168,19 @@ def init_model(file, sheet=None):
 
 def sum_functions(lbd, p0, func_types, index_fit, param_fixed):
 
-    """
-    Sum of the funtions which define the model. The parameter h is the area of the function
+    """Sum of the funtions which define the model. The parameter h is the area of the function
     not the height of the peak.
     
-    Arguments:
+    Args:
         lbd (ndarray): wavelengths
+        
         p0 (ndrray): parameters to be fitted
+        
         func_type (list): list of function to be added
-        index_fit (ndarray): list of the indice of the free parameters in the ndarray 'param_fixed'
+        
+        index_fit (ndarray): list of the indice of the free parameters 
+        in the ndarray 'param_fixed'
+        
         param_fixed (ndarray): array of the fixed parameter
       
     Returns:
@@ -248,49 +260,33 @@ def sum_functions(lbd, p0, func_types, index_fit, param_fixed):
 
     return sg
 
-
-def wrapper_fit_func(x, func_type, index_fit, param_fixed, param_fit):
-
-    """
-    wrapper function for curve_fit(f, xdata, ydata, p0 = param_fit) 
-    where  f(x, *param_fit) is the objective function
-    
-    Arguments:
-        x(ndarray): vawelengths
-        func_type (list): list of function to be added
-        index_fit (ndarray): list of the indice of the free parameters in the ndarray 'param_fixed'
-        param_fixed (ndarray): array of the fixed parameter
-        param_fit (ndrray): parameters to be fitted
-      
-    Returns:
-        y_model (ndarray): value of the fiiting function with parameter param_fit
-        
-    """
-    y_model = sum_functions(x, param_fit, func_type, index_fit, param_fixed)
-    return y_model
-
-
 def fit_Raman(da, file_model, sheet=""):
 
-    """
-    fits with least square method a spectrum. The parameters of the objective function
+    """fits with least square method a spectrum. The parameters of the objective function
     are defined in xlsx or in a csv file. 
     For an xlsx file the name of the sheet can be specified (optional)
     
     To create your own mode execute:
-        import raman_hyperspectra as rhp
-        print(rhp.raman_hyperspectra_fit.__doc__)
-        follow the instructions
+        - import raman_hyperspectra as rhp
+        - print(rhp.raman_hyperspectra_fit.__doc__)
+        - follow the instructions
     
-    Arguments:
+    Args:
         da (DataArray): xarray containing the spectrum
-        fit_model (string): the absolute path of the Excel file containing the model parameters
-        sheet (string): name of the Excel file sheet containing the model parameter (default = None)
+        
+        fit_model (string): the absolute path of the Excel file 
+        containing the model parameters
+        
+        sheet (string): name of the Excel file sheet containing 
+        the model parameter (default = None)
         
     Returns:
         popt (float): fitting parameters
+        
         da_fit (DataArray): fitted spectrum
+        
         R2 (float): fit determination coefficient
+        
     """
 
     # Standard library import
@@ -325,9 +321,9 @@ def fit_Raman(da, file_model, sheet=""):
         fit_Raman.label = getattr(fit_Raman, "label", label)
 
         fit_Raman.flag = False
-        fit_Raman.model = getattr(fit_Raman, "model", file_model + sheet)
+        fit_Raman.model = getattr(fit_Raman, "model", str(file_model) + sheet)
 
-    elif fit_Raman.model != file_model + sheet:  # model change
+    elif fit_Raman.model != str(file_model) + sheet:  # model change
         param_fixed, param_fit, func_type, index_fit, label = init_model(
             file_model, sheet
         )
@@ -338,7 +334,7 @@ def fit_Raman(da, file_model, sheet=""):
         fit_Raman.index_fit = index_fit
         fit_Raman.label = label
 
-        fit_Raman.model = file_model + sheet
+        fit_Raman.model = str(file_model) + sheet
 
     else:
         param_fixed = fit_Raman.param_fixed
@@ -350,9 +346,7 @@ def fit_Raman(da, file_model, sheet=""):
     try:
 
         popt, _ = curve_fit(
-            lambda lbd, *param_fit: wrapper_fit_func(
-                lbd, func_type, index_fit, param_fixed, param_fit
-            ),
+            lambda lbd, *param_fit: sum_functions(lbd, param_fit, func_type, index_fit, param_fixed),
             lbd,
             y_exp,
             p0=param_fit,
@@ -383,24 +377,29 @@ def fit_hyperspectra_Si(
     da, file_model, sheet="", lbd_deb_fit=None, lbd_end_fit=None, save_xlsx=True
 ):
 
-    """
-    This function fits an hyperspectra using the modele store in the csv/xlsx file "file_model"
-    
+    """This function fits an hyperspectra using the modele store in the csv/xlsx file "file_model"
     To create your own mode execute:
         import raman_hyperspectra as rhp
         print(rhp.raman_hyperspectra_fit.__doc__)
         follow the instructions
     
-    Arguments:
+    Args:
       da (DataArray): hyperstrum
+      
       file_model (string): the Excel file containing the model
+      
       sheet (string): name of the sheet containing the model (default = '')
+      
       lbd_deb_fit (float): (optional) the first vawelength of the fitting domain
+      
       lbd_end_fit (float): (optional) the last vawelength of the fitting domain
+      
       save_xlsx (bool): if True save the results as 'Si cristallin.xlsx'
 
     Returns:
-      df (multi index dataFrame): fitted parameters and the goodness of fit parameter (r^2)
+      df (multi index dataFrame): fitted parameters and 
+      the goodness of fit parameter (r^2)
+      
     """
 
     # Standard library import
@@ -441,9 +440,7 @@ def fit_hyperspectra_Si(
         try:
 
             popt, _ = curve_fit(
-                lambda lbd, *param_fit: wrapper_fit_func(
-                    lbd, func_type, index_fit, param_fixed, param_fit
-                ),
+                lambda lbd, *param_fit: sum_functions(lbd, param_fit, func_type, index_fit, param_fixed),
                 lbd,
                 y[idx],
                 p0=param_fit,
